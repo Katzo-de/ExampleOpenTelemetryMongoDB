@@ -1,4 +1,6 @@
+using ExampleOpenTelemetryMongoDB.Business;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace ExampleOpenTelemetryMongoDB.Controllers
 {
@@ -11,23 +13,31 @@ namespace ExampleOpenTelemetryMongoDB.Controllers
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
+
+        private readonly WeatherForecastBusiness _business;
         private readonly ILogger<WeatherForecastController> _logger;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(WeatherForecastBusiness business, ILogger<WeatherForecastController> logger)
         {
+            _business = business;
             _logger = logger;
         }
 
-        [HttpGet(Name = "GetWeatherForecast")]
-        public IEnumerable<WeatherForecast> Get()
+
+        [HttpGet]
+        public async Task<IEnumerable<WeatherForecast>> Get()
         {
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                TemperatureC = Random.Shared.Next(-20, 55),
-                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-            })
-            .ToArray();
+            _logger.LogInformation("Fetching weather forecasts from MongoDB");
+            return await _business.GetForecastAsync();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] WeatherForecast forecast)
+        {
+            _logger.LogInformation("Inserting weather forecast: {@Forecast}", forecast);
+            await _business.InsertForecastAsync(forecast);
+            return Ok();
+        }
+
     }
 }

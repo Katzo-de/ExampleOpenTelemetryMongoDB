@@ -1,3 +1,5 @@
+using ExampleOpenTelemetryMongoDB.Business;
+using MongoDB.Driver;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -16,16 +18,14 @@ builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>
     {
         tracerProviderBuilder
+            .AddSource("MyAspNetService")
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("MyAspNetService"))
-            .AddAspNetCoreInstrumentation()
             .AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation(options =>
             {
-                options.RecordException = true; // Record exceptions in traces
+                //options.RecordException = true; // Record exceptions in traces
                 options.EnrichWithHttpRequest = (activity, request) =>
                 {
-                    activity.SetTag("http.request.method", request.Method);
-                    activity.SetTag("http.request.path", request.Path);
                     activity.SetTag("http.request.query_string", request.QueryString.ToString());
                 };
             })
@@ -69,6 +69,11 @@ builder.Logging.AddOpenTelemetry(options =>
         // opt.Protocol = OtlpExportProtocol.Grpc; // Default: gRPC
     });
 });
+
+builder.Services.AddSingleton<IMongoClient>(sp =>
+    new MongoClient("mongodb://localhost:27017"));
+
+builder.Services.AddSingleton<WeatherForecastBusiness>();
 
 var app = builder.Build();
 
