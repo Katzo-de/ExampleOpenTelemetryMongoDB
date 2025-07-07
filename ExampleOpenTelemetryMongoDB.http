@@ -1,0 +1,6 @@
+@ExampleOpenTelemetryMongoDB_HostAddress = http://localhost:5294
+
+GET {{ExampleOpenTelemetryMongoDB_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
